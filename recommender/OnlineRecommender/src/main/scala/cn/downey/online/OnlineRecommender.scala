@@ -115,7 +115,6 @@ object OnlineRecommender {
           //3.计算每个备选商品的推荐优先级，得到当前用户的实时推荐列表, 保存成一个数组Array[productId, score]
           val streamRecs = computeProductScore(candidateProducts, userRecentlyRatings, simProductsMatrixBC.value)
 
-
           //4.把推荐列表保存到mongodb
           saveDataInMongoDB(userId, streamRecs)
       }
@@ -176,11 +175,71 @@ object OnlineRecommender {
       .map(x => x._1)
   }
 
-  def computeProductScore(candidateProducts: Unit, userRecentlyRatings: Unit, value: scala.collection.Map[Int, scala.collection.immutable.Map[Int, Double]]) = {
 
+  /**
+   * 计算每个备选商品的推荐得分
+   *
+   * @param candidateProducts
+   * @param userRecentlyRatings
+   * @param simProducts
+   * @return
+   */
+  def computeProductScore(candidateProducts: Array[Int],
+                          userRecentlyRatings: Array[(Int, Double)],
+                          simProducts: scala.collection.Map[Int, scala.collection.immutable.Map[Int, Double]]): Array[(Int, Double)] = {
+    //定义一个长度可变数组ArrayBuffer, 保存每一个备选商品的基础得分(productId,score)
+    val scores = scala.collection.mutable.ArrayBuffer[(Int, Double)]()
+    //定义两个map, 用于保存每个商品的高分和低分的计数器(productId->count)
+    val increMap = scala.collection.mutable.HashMap[Int, Int]()
+    val decreMap = scala.collection.mutable.HashMap[Int, Int]()
+
+    //遍历每个备选商品, 计算和已评分商品的相似度
+    for (candidateProduct <- candidateProducts; userRecentlyRating <- userRecentlyRatings) {
+      //从相似度矩阵中获取当前备选商品和当前已评分商品间的相似度
+      val simScore = getProductsSimScore(candidateProduct, userRecentlyRating._1, simProducts)
+      if (simScore > 0.4) {
+        //按照公式加权计算,得到基础评分
+        scores += ((candidateProduct, simScore * userRecentlyRating._2))
+        if (userRecentlyRating._2 > 3) {
+          increMap(candidateProduct) = increMap.getOrDefault(candidateProduct, 0) + 1
+        } else {
+          decreMap(candidateProduct) = decreMap.getOrDefault(candidateProduct, 0) + 1
+        }
+      }
+    }
+
+    //根据公式计算所有的推荐评分, 首先以productId做groupby
+    scores.groupBy(_._1).map {
+      case (productId, scoreList) =>
+        (productId, scoreList.map(_._2).sum / scoreList.length + log(increMap.getOrDefault(productId, 1)) - log(decreMap.getOrDefault(productId, 1)))
+    }
+      //返回推荐列表，按照得分排序
+      .toArray
+      .sortWith(_._2 > _._2)
   }
 
-  def saveDataInMongoDB(userId: Int, streamRecs: Unit): Unit = {
+  def getProductsSimScore(product1: Int,
+                          product2: Int,
+                          simProducts: scala.collection.Map[Int, scala.collection.immutable.Map[Int, Double]]): Double = {
+    simProducts.get(product1) match {
+      case Some(sims) => sims.get(product2) match {
+        case Some(score) => score
+        case None => 0.0
+      }
+      case None => 0.0
+    }
+  }
 
+  def log(i: Int): Double = {
+    val N = 10
+    math.log(i) / math.log(N)
+  }
+
+  def saveDataInMongoDB(userId: Int, streamRecs: Array[(Int, Double)])(implicit mongoConfig: MongoConfig): Unit = {
+    val streamRecsCollection = ConnHelper.mongoClient(mongoConfig.db)(STREAM_RECS)
+    // 按照userId查询并更新
+    streamRecsCollection.findAndRemove(MongoDBObject("userId" -> userId))
+    streamRecsCollection.insert(MongoDBObject("userId" -> userId,
+      "recs" -> streamRecs.map(x => MongoDBObject("productId" -> x._1, "score" -> x._2))))
   }
 }
