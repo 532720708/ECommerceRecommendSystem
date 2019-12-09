@@ -55,15 +55,15 @@ object ALSTrainer {
   // RMSE输出需要改成遍历
   def adjustALSParams(trainData: RDD[Rating], testData: RDD[Rating]) = {
     //遍历数组中定义的参数取值
-    val result = for (rank <- Array(5, 10, 20, 50); lambda <- Array(1, 0.1, 0.01))
+    val result = for (rank <- Array(5, 10, 20, 50); iterations <- Array(10, 20); lambda <- Array(1, 0.1, 0.01))
       yield {
-        val model = ALS.train(trainData, rank, 10, lambda)
+        val model = ALS.train(trainData, rank, iterations, lambda)
         val rmse = getRMSE(model, testData)
-        (rank, lambda, rmse)
+        (rank, iterations, lambda, rmse)
       }
 
     //按照RMSE排序并输出最优参数
-    println(result.minBy(_._3))
+    println(result.minBy(_._4))
   }
 
   def getRMSE(model: MatrixFactorizationModel, data: RDD[Rating]): Double = {
