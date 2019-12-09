@@ -2,7 +2,7 @@ package cn.downey.offline
 
 import breeze.numerics.sqrt
 import cn.downey.offline.OfflineRecommender.MONGODB_RATING_COLLECTION
-import org.apache.spark.SparkConf
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.recommendation.{ALS, MatrixFactorizationModel, Rating}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
@@ -18,8 +18,14 @@ object ALSTrainer {
     // 创建spark config
     val sparkConf = new SparkConf().setMaster(config("spark.cores")).setAppName("OfflineRecommender")
 
+    //创建Spark上下文对象
+    val sc = new SparkContext(sparkConf)
+    sc.setCheckpointDir("/tmp")
+    println("================================" + sc.getCheckpointDir)
+
     // 创建spark session
     val spark = SparkSession.builder().config(sparkConf).getOrCreate()
+
 
     import spark.implicits._
 
@@ -55,7 +61,7 @@ object ALSTrainer {
   // RMSE输出需要改成遍历
   def adjustALSParams(trainData: RDD[Rating], testData: RDD[Rating]) = {
     //遍历数组中定义的参数取值
-    val result = for (rank <- Array(5, 10, 20, 50); iterations <- Array(10, 20); lambda <- Array(1, 0.1, 0.01))
+    val result = for (rank <- Array(5, 10, 20, 50); iterations <- Array(50); lambda <- Array(1, 0.1, 0.01))
       yield {
         val model = ALS.train(trainData, rank, iterations, lambda)
         val rmse = getRMSE(model, testData)
