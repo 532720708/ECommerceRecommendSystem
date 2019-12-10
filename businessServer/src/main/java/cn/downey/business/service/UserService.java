@@ -63,12 +63,6 @@ public class UserService {
     private User documentToUser(Document document) {
         try {
             return objectMapper.readValue(JSON.serialize(document), User.class);
-        } catch (JsonParseException e) {
-            e.printStackTrace();
-            return null;
-        } catch (JsonMappingException e) {
-            e.printStackTrace();
-            return null;
         } catch (IOException e) {
             e.printStackTrace();
             return null;

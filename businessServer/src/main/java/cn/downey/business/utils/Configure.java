@@ -28,6 +28,7 @@ public class Configure {
     private String esHost;
     private int esPort;
     private String redisHost;
+    private int redisPort;
 
     public Configure() {
         try {
@@ -37,9 +38,7 @@ public class Configure {
             this.mongoHost = properties.getProperty("mongo.host");
             this.mongoPort = Integer.parseInt(properties.getProperty("mongo.port"));
             this.redisHost = properties.getProperty("redis.host");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            System.exit(0);
+            this.redisPort = Integer.parseInt(properties.getProperty("redis.port"));
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(0);
@@ -48,8 +47,7 @@ public class Configure {
 
     @Bean(name = "mongoClient")
     public MongoClient getMongoClient() {
-        MongoClient mongoClient = new MongoClient(mongoHost, mongoPort);
-        return mongoClient;
+        return new MongoClient(mongoHost, mongoPort);
     }
 
     @Bean(name = "transportClient")
@@ -62,7 +60,6 @@ public class Configure {
 
     @Bean(name = "jedis")
     public Jedis getRedisClient() {
-        Jedis jedis = new Jedis(redisHost);
-        return jedis;
+        return new Jedis(redisHost, redisPort);
     }
 }

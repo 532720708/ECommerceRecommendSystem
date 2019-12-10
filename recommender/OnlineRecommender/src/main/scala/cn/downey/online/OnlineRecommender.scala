@@ -1,6 +1,6 @@
 package cn.downey.online
 
-import com.mongodb.MongoClientURI
+
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoClient, MongoClientURI}
 import org.apache.kafka.common.serialization.StringDeserializer

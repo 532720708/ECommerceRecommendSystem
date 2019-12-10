@@ -33,7 +33,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.atguigu.kafkastream.Application</mainClass>
+                            <mainClass>cn.downey.kafkastream.Application</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
