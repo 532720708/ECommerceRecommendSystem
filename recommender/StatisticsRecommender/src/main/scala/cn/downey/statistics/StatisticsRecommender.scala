@@ -6,7 +6,6 @@ import java.util.Date
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-
 case class Rating(userId: Int, productId: Int, score: Double, timestamp: Int)
 
 case class MongoConfig(uri: String, db: String)

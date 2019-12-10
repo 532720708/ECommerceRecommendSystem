@@ -18,6 +18,7 @@
         <module>OnlineRecommender</module>
         <module>ContentRecommender</module>
         <module>KafkaStreaming</module>
+        <module>ItemCFRecommender</module>
     </modules>
 
     <dependencyManagement>
