@@ -16,6 +16,8 @@
         <module>StatisticsRecommender</module>
         <module>OfflineRecommender</module>
         <module>OnlineRecommender</module>
+        <module>ContentRecommender</module>
+        <module>KafkaStreaming</module>
     </modules>
 
     <dependencyManagement>
@@ -63,7 +65,6 @@
             </plugin>
         </plugins>
     </build>
-
 
 
 </project>
