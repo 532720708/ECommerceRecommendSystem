@@ -10,6 +10,7 @@
     <version>1.0</version>
     <modules>
         <module>recommender</module>
+        <module>businessServer</module>
     </modules>
 
     <properties>
